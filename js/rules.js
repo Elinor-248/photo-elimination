@@ -54,9 +54,15 @@ export function checkAddPrompt({ prompts, authorId, text }) {
 
 // customOnly 開：先抽完自訂題目，再改用內建題庫，此時 fallback 為 true（畫面要顯示提示）。
 // customOnly 關：自訂和內建混在一起隨機抽。
-// 同一局不重複；全部用完時 prompt 為 null。
+// 同一局不重複；全部用完時重新開放所有題目，reset 為 true，呼叫端要把 usedPromptIds 清空後再記這題。
+// 完全沒有題目時 prompt 為 null。
 export function pickPrompt({ custom, builtin, usedIds, customOnly, random = Math.random }) {
-  const used = new Set(toIdList(usedIds));
+  const result = pickUnused({ custom, builtin, used: new Set(toIdList(usedIds)), customOnly, random });
+  if (result.prompt) return { ...result, reset: false };
+  return { ...pickUnused({ custom, builtin, used: new Set(), customOnly, random }), reset: true };
+}
+
+function pickUnused({ custom, builtin, used, customOnly, random }) {
   const unusedCustom = custom
     .filter((p) => !used.has(p.id))
     .map((p) => ({ id: p.id, text: p.text, authorId: p.authorId }));

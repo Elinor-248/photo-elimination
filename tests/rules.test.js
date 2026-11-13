@@ -169,10 +169,24 @@ describe('出題與抽題', () => {
     assert.equal(r.prompt.id, 'color-red');
   });
 
-  test('全部題目都用完：prompt 為 null', () => {
+  test('R19 全部題目都用完：重新開放所有題目，reset 為 true', () => {
     const used = { c1: true, 'color-red': true };
-    assert.equal(pickPrompt({ custom, builtin, usedIds: used, customOnly: false }).prompt, null);
-    assert.equal(pickPrompt({ custom, builtin, usedIds: used, customOnly: true }).prompt, null);
+    const mixed = pickPrompt({ custom, builtin, usedIds: used, customOnly: false, random: () => 0.99 });
+    assert.equal(mixed.prompt.id, 'color-red');
+    assert.equal(mixed.reset, true);
+    // 只用自訂題目開啟時，重新開放後也是先抽自訂題目
+    const customFirst = pickPrompt({ custom, builtin, usedIds: used, customOnly: true, random: () => 0.99 });
+    assert.equal(customFirst.prompt.id, 'c1');
+    assert.equal(customFirst.fallback, false);
+    assert.equal(customFirst.reset, true);
+  });
+
+  test('還有題目沒用過時 reset 為 false', () => {
+    assert.equal(pickPrompt({ custom, builtin, usedIds: {}, customOnly: false }).reset, false);
+  });
+
+  test('完全沒有題目：prompt 為 null', () => {
+    assert.equal(pickPrompt({ custom: [], builtin: [], usedIds: {}, customOnly: false }).prompt, null);
   });
 
   test('每人最多 3 題，每題 1～20 字', () => {
