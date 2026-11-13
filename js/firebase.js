@@ -128,6 +128,11 @@ export async function createRoom(name) {
   return { error: 'createFailed' };
 }
 
+// 重新整理時用：自己是不是已經在這個房間的名單裡
+export async function isInRoom(code) {
+  return (await get(roomRef(code, `players/${uid}`))).exists();
+}
+
 // 回傳錯誤代碼，成功時回傳 null。已經在房間裡（重新整理）直接算成功。
 export async function joinRoom(code, name) {
   const metaSnap = await get(roomRef(code, 'meta'));
