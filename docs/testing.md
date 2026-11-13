@@ -6,6 +6,20 @@
 
 執行 `node --test`，每次提交前都要全部通過。
 
+| 檔案 | 測什麼 | 需要模擬器 |
+|---|---|---|
+| `tests/rules.test.js` | 遊戲規則（下表 R1～R19） | 不用 |
+| `tests/engine.test.js` | 每一種階段轉換寫入的內容、房主轉移 | 不用 |
+| `tests/database-rules.test.js` | 安全規則：用 REST 對模擬器實際寫入，確認該擋的有擋 | 要 |
+
+改到 `firebase/database.rules.json` 時，先啟動模擬器再跑 `node --test`。模擬器沒開時 `database-rules.test.js` 會整組跳過（顯示 skipped），這時不能算有測到安全規則：
+
+```
+PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH" firebase emulators:start --only auth,database
+```
+
+（Java 用 Homebrew 的 `openjdk@21`，沒有加進 shell 設定，所以在指令前面指定路徑。）
+
 `tests/rules.test.js` 至少要涵蓋以下情境。改到 `rules.js` 時，要先確認這些情境都有對應的測試，再新增這次改動的情境。
 
 | # | 情境 | 預期結果 |
