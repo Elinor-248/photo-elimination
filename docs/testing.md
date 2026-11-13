@@ -55,7 +55,7 @@ PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH" firebase emulators:start --only au
 
 ### 2.1 開房與等待室
 
-- [ ] 建立房間，拿到 4 位數房號和 QR code
+- [ ] 建立房間，拿到 4 位數房號
 - [ ] 其他分頁用房號加入，名單即時更新
 - [ ] 重複的暱稱會被擋下
 - [ ] 第 13 人加入時顯示「房間已滿」

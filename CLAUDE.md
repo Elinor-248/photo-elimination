@@ -176,7 +176,7 @@ JavaScript 命名：
 │   ├── rules.js              遊戲規則純函式
 │   ├── engine.js             遊戲推進：判斷是否該換階段，帶 step + 1 寫入
 │   ├── screens/              home, lobby, capture, reveal, vote, result, ending, bigscreen
-│   ├── components/           camera, countdown, photo-grid, qr-code, toast
+│   ├── components/           camera, countdown, photo-grid, toast
 │   └── utils/                image（壓縮）, room-code, browser（偵測內建瀏覽器）
 ├── data/prompts.json         內建題庫
 ├── i18n/zh-TW.js             所有介面文字
