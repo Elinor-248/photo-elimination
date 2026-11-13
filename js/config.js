@@ -37,7 +37,6 @@ export const VOTE_GRACE_MS = 1000;
 
 export const ENGINE_TICK_MS = 500;
 export const HOST_TIMEOUT_MS = 10000;
-export const ROOM_TTL_MS = 24 * 60 * 60 * 1000;
 
 export const MAX_PHOTO_CHARS = 400000;
 export const PHOTO_PREFIX = 'data:image/jpeg;base64,';

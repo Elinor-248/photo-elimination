@@ -14,7 +14,6 @@ import {
 
 const DB = `http://${EMULATOR_HOST}:${DATABASE_EMULATOR_PORT}`;
 const NS = `ns=${DEMO_PROJECT_ID}-default-rtdb`;
-const DAY = 24 * 60 * 60 * 1000;
 
 const emulatorUp = await fetch(`${DB}/.json?${NS}`, { signal: AbortSignal.timeout(1000) })
   .then(() => true)
@@ -293,21 +292,15 @@ describe('安全規則', { skip: !emulatorUp && '模擬器沒開' }, () => {
     });
   });
 
-  describe('舊房間清理', () => {
-    test('只能刪除 24 小時沒更新的房間', async () => {
-      const fresh = await setupRoom({ host });
-      assert.equal((await remove(outsider, `rooms/${fresh}`)).ok, false);
-      const old = await setupRoom({ host, metaOverrides: { updatedAt: Date.now() - DAY - 1000 } });
-      assert.equal((await remove(outsider, `rooms/${old}`)).ok, true);
+  describe('舊房間（由管理者手動到後台刪除）', () => {
+    test('一般使用者不能刪除整個房間，房主也不行', async () => {
+      const code = await setupRoom({ host });
+      assert.equal((await remove(outsider, `rooms/${code}`)).ok, false);
+      assert.equal((await remove(host, `rooms/${code}`)).ok, false);
     });
 
-    test('只能用「找過期房間」的查詢列出房間', async () => {
-      const cutoff = Date.now() - DAY - 60000;
-      const q = `&orderBy=${encodeURIComponent('"meta/updatedAt"')}&endAt=${cutoff}&limitToFirst=5`;
-      assert.equal((await read(outsider, 'rooms', q)).ok, true);
+    test('不能列出所有房間', async () => {
       assert.equal((await read(outsider, 'rooms')).ok, false);
-      const notExpired = `&orderBy=${encodeURIComponent('"meta/updatedAt"')}&endAt=${Date.now()}&limitToFirst=5`;
-      assert.equal((await read(outsider, 'rooms', notExpired)).ok, false);
     });
   });
 });

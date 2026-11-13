@@ -8,7 +8,6 @@ import {
   EMULATOR_HOST,
   FIREBASE_CONFIG,
   FIREBASE_SDK_URL,
-  ROOM_TTL_MS,
   USE_EMULATOR,
 } from './config.js';
 import { DEFAULT_SETTINGS, checkAddPrompt, checkJoin } from './rules.js';
@@ -28,16 +27,9 @@ const {
   onValue,
   onDisconnect,
   serverTimestamp,
-  query,
-  orderByChild,
-  endAt,
-  limitToFirst,
 } = await import(`${FIREBASE_SDK_URL}/firebase-database.js`);
 
 const CREATE_ROOM_ATTEMPTS = 10;
-// 清理查詢的截止時間再往前推一點，避免本機和伺服器的時間差讓查詢被安全規則擋下
-const CLEANUP_MARGIN_MS = 60 * 1000;
-const CLEANUP_BATCH = 5;
 
 let database = null;
 let uid = null;
@@ -106,29 +98,12 @@ function newPlayer(name) {
   return { name, joinedAt: serverTimestamp(), online: true, alive: true };
 }
 
-// 刪除超過 ROOM_TTL_MS 沒更新的房間（SPEC 5.5）。失敗不影響建房。
-async function cleanupExpiredRooms() {
-  try {
-    const cutoff = serverNow() - ROOM_TTL_MS - CLEANUP_MARGIN_MS;
-    const expired = query(ref(database, 'rooms'), orderByChild('meta/updatedAt'), endAt(cutoff), limitToFirst(CLEANUP_BATCH));
-    const snap = await get(expired);
-    const removals = [];
-    snap.forEach((child) => {
-      removals.push(remove(child.ref));
-    });
-    await Promise.allSettled(removals);
-  } catch {
-    // 清理是順手做的，失敗就等下次有人建房
-  }
-}
-
 // 回傳 { code } 或 { error }
 export async function createRoom(name) {
   const trimmed = name.trim();
   const error = checkJoin({ phase: 'lobby', playerNames: [], name: trimmed });
   if (error) return { error };
 
-  await cleanupExpiredRooms();
   for (let i = 0; i < CREATE_ROOM_ATTEMPTS; i++) {
     const code = generateRoomCode();
     if ((await get(roomRef(code, 'meta'))).exists()) continue;

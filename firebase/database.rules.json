@@ -1,13 +1,8 @@
 {
   "rules": {
     "rooms": {
-      ".read": "auth != null && query.orderByChild === 'meta/updatedAt' && query.endAt <= now - 86400000 && query.limitToFirst <= 5",
-      ".indexOn": [
-        "meta/updatedAt"
-      ],
       "$code": {
         ".read": "auth != null && ((root.child('rooms/' + $code + '/players/' + auth.uid).exists() || root.child('rooms/' + $code + '/screens/' + auth.uid).exists()))",
-        ".write": "auth != null && !newData.exists() && data.child('meta/updatedAt').val() < now - 86400000",
         ".validate": "$code.matches(/^[0-9]{4}$/)",
         "meta": {
           ".read": "auth != null",

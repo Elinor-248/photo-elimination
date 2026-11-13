@@ -48,7 +48,7 @@
 - **只用 Firebase 免費 Spark 方案。** 不能用 Cloud Functions、Cloud Storage、Cloud Scheduler，也不能用任何需要綁卡的服務。因此：
   - 遊戲推進（換階段、算票）由前端執行：任何在線的裝置都可以推進，用帶 `meta/step` + 1 的多路徑 update 確保只推進一次。詳見 SPEC 5.2。
   - 照片壓縮成 base64 JPEG，直接存在 Realtime Database。
-  - 舊房間的清理，在有人建立新房間時順手執行，不靠排程。
+  - 舊房間不自動清理，由使用者手動到 Firebase 後台刪除（SPEC 5.5）。
 - **不使用建置工具和框架。** 不要加 React、Vite、webpack、TypeScript、Tailwind。瀏覽器直接執行 `index.html` 和 ES modules。
 - **執行時不用 npm 套件。** 外部函式庫只能透過 CDN 載入，而且必須固定版本號。開發用的工具（例如 firebase-tools）可以裝。
 - **只有一個頁面。** 所有畫面都在 `index.html` 裡切換，大螢幕模式用 `?mode=screen`。
