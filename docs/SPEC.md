@@ -1,6 +1,6 @@
 # 照片淘汰賽 規格書
 
-版本：v1.0（2026-11-13）
+版本：v1.1（2026-11-13）
 這份文件是產品行為的唯一依據。程式碼和這份文件不一致時，先回報，不要自己決定以哪邊為準。
 
 ---
@@ -110,11 +110,10 @@
 
 - 每位玩家（包括房主）在等待室最多可以出 3 題，每題 1～20 字。
 - 玩家只看得到自己出的題目和題庫總數。房主看得到全部，而且可以刪除任何一題。
-- 抽題順序：
-  1. 先從還沒用過的自訂題目隨機抽。
-  2. 自訂題目用完後，再從內建題庫隨機抽。
-  3. 同一局不會重複出題。
-- 「只用自訂題目」開啟時，自訂題目用完會改用內建題庫，並顯示提示。
+- 抽題方式：
+  - 「只用自訂題目」關閉：還沒用過的自訂題目和內建題目混在一起，隨機抽一題。
+  - 「只用自訂題目」開啟：先從還沒用過的自訂題目隨機抽；自訂題目用完後，改從內建題庫隨機抽，並顯示提示。
+  - 同一局不會重複出題。
 - 題目如果是自訂的，畫面上要顯示「出題者：暱稱」。
 
 ### 3.5 每一輪的流程
@@ -336,7 +335,9 @@ rooms/{roomCode}
     timeouts: { [uid]: true }
     candidates: { [uid]: true }
     votes/{voterUid}: targetUid
-    revote: { candidates: { [uid]: true }, quota: number, votes: { [voterUid]: targetUid } }
+    revote: { candidates: { [uid]: true }, quota: number, preEliminated: [uid], votes: { [voterUid]: targetUid } }
+                                       preEliminated：重投前就確定出局的人（3.6 quota = 2、第一名一人、第二名平手），
+                                       result.eliminated 會包含他們
     result: { tally: { [uid]: number }, eliminated: [uid], reason: "vote" | "tie" | "noVotes" }
   ending
     winnerId: string
