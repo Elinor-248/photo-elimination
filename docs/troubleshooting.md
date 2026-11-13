@@ -60,4 +60,4 @@
 - 症狀：用 `http://192.168.x.x:8000` 開啟時，`navigator.mediaDevices` 是 `undefined`。
 - 原因：相機只能在安全來源（HTTPS 或 localhost）使用。
 - 解法：部署到 GitHub Pages 的測試分支，或使用 HTTPS 通道再用手機測試。
-- 怎麼預防：已寫在 SPEC 5.9。
+- 怎麼預防：已寫在 SPEC 5.8。
