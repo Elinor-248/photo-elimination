@@ -12,7 +12,7 @@
 | `tests/engine.test.js` | 每一種階段轉換寫入的內容、房主轉移 | 不用 |
 | `tests/database-rules.test.js` | 安全規則：用 REST 對模擬器實際寫入，確認該擋的有擋 | 要 |
 
-改到 `firebase/database.rules.json` 時，先啟動模擬器再跑 `node --test`。模擬器沒開時 `database-rules.test.js` 會整組跳過（顯示 skipped），這時不能算有測到安全規則：
+改到 `firebase/database.rules.json` 時，先啟動模擬器再跑 `node --test`。模擬器沒開時 `database-rules.test.js` 會整組跳過，這時不能算有測到安全規則。跳過時輸出裡會有一行 `﹣ 安全規則 # 模擬器沒開`，總測試數也會少 30 項左右；最下面的 `ℹ skipped` 仍然是 0，不要看那一行判斷：
 
 ```
 PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH" firebase emulators:start --only auth,database
