@@ -244,7 +244,7 @@ function update(refs, state) {
           },
           t('lobby.start'),
         )
-      : h('p', { class: 'lobby-wait' }, t('lobby.waitHost')),
+      : h('p', { class: 'wait-note' }, t('lobby.waitHost')),
   );
 }
 

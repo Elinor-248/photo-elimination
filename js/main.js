@@ -8,20 +8,29 @@ import {
   watchConnection,
   watchRoom,
 } from './firebase.js';
-import { planStart, seededRandom, startEngine } from './engine.js';
+import { planPlayAgain, planStart, seededRandom, startEngine } from './engine.js';
 import { canStart } from './rules.js';
 import { isRoomCode } from './utils/room-code.js';
 import { h } from './utils/dom.js';
 import { t } from './utils/i18n.js';
 import { showToast } from './components/toast.js';
+import { stopCamera } from './components/camera.js';
 import * as home from './screens/home.js';
 import * as lobby from './screens/lobby.js';
-import * as playing from './screens/playing.js';
+import * as capture from './screens/capture.js';
+import * as reveal from './screens/reveal.js';
+import * as vote from './screens/vote.js';
+import * as result from './screens/result.js';
+import * as ending from './screens/ending.js';
 
-const SCREENS = { home, lobby, playing };
+// 畫面名稱就是 meta.phase；投票和重投共用 vote.js，但切換時要重畫，所以分成兩個名稱
+const SCREENS = { home, lobby, capture, reveal, vote, revote: vote, result, ending };
+// 觀眾頂部常駐提示的階段（SPEC 4.8）
+const OBSERVER_PHASES = ['capture', 'reveal', 'vote', 'revote', 'result'];
 
 const container = document.getElementById('app');
 const banner = document.getElementById('banner');
+const roleBanner = document.getElementById('role-banner');
 
 const state = {
   uid: null,
@@ -30,7 +39,7 @@ const state = {
   builtinPrompts: [],
   // 從別人分享的 ?room= 連結進來、還沒加入時的房號
   prefillRoom: null,
-  actions: { enterRoom, startGame, clearPrefill },
+  actions: { enterRoom, startGame, playAgain, clearPrefill },
 };
 
 let currentScreen = null;
@@ -38,11 +47,23 @@ let stopRoom = [];
 
 function screenName() {
   if (!state.code || !state.room) return 'home';
-  return state.room.meta.phase === 'lobby' ? 'lobby' : 'playing';
+  return state.room.meta.phase;
+}
+
+function me() {
+  return state.room?.players?.[state.uid];
+}
+
+// 相機整局不關（使用者決定），只有出局、結束、回到等待室或首頁時關掉
+function updateCamera(name) {
+  const shooting = ['capture', 'reveal', 'vote', 'revote', 'result'].includes(name) && me()?.alive;
+  if (!shooting) stopCamera();
 }
 
 function show() {
   const name = screenName();
+  updateCamera(name);
+  roleBanner.hidden = !(OBSERVER_PHASES.includes(name) && me() && !me().alive);
   if (name !== currentScreen) {
     SCREENS[currentScreen]?.destroy();
     container.replaceChildren();
@@ -116,6 +137,10 @@ async function startGame() {
   return null;
 }
 
+async function playAgain() {
+  await applyRoomUpdates(state.code, planPlayAgain(state.room, serverNow()));
+}
+
 function watchBanner() {
   // 一開始還沒連上不算斷線，連上過一次之後才顯示
   let everConnected = false;
@@ -128,6 +153,7 @@ function watchBanner() {
 async function boot() {
   document.title = t('app.title');
   banner.textContent = t('app.offline');
+  roleBanner.textContent = t('app.observer');
   container.replaceChildren(h('p', { class: 'app-loading' }, t('app.loading')));
 
   try {

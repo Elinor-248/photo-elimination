@@ -157,6 +157,18 @@
   color: var(--color-surface);
 }
 
+/* ---- 等待提示（等房主開始、等房主開新局） ---- */
+
+.wait-note {
+  padding: var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  font-size: var(--text-large);
+  font-weight: 900;
+  text-align: center;
+}
+
 /* ---- 頂部提示列（斷線） ---- */
 
 .banner {
@@ -235,6 +247,285 @@
 
   @keyframes toast-out {
     to {
+      opacity: 0;
+    }
+  }
+}
+
+/* ---- 畫面標題與說明（遊戲中各畫面共用） ---- */
+
+.screen-title {
+  font-size: var(--text-large);
+  font-weight: 900;
+  text-align: center;
+}
+
+.screen-hint {
+  color: var(--color-muted);
+  font-size: var(--text-small);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---- 觀眾提示列 ---- */
+
+.role-banner {
+  padding: var(--space-2) var(--space-4);
+  border-bottom: var(--border);
+  background: var(--color-muted);
+  color: var(--color-surface);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* ---- 題目卡 ---- */
+
+.prompt-card {
+  display: grid;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.prompt-card-round {
+  justify-self: center;
+  padding: 0 var(--space-3);
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  font-size: var(--text-small);
+  font-weight: 700;
+  text-align: center;
+}
+
+/* 題目是畫面上最大的字（SPEC 2.3） */
+.prompt-card-text {
+  font-size: var(--text-title);
+  font-weight: 900;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.prompt-card-author {
+  font-weight: 700;
+}
+
+.prompt-card-notice {
+  justify-self: center;
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-thin);
+  border-radius: var(--radius-small);
+  background: var(--color-secondary);
+  font-size: var(--text-small);
+  font-weight: 700;
+}
+
+/* ---- 倒數 ---- */
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.countdown-number {
+  min-width: 2.2em;
+  font-size: var(--text-title);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.countdown-bar {
+  flex: 1;
+  height: 16px;
+  overflow: hidden;
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.countdown-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  transform-origin: left;
+  transition: transform 200ms linear;
+}
+
+.countdown--danger .countdown-number {
+  color: var(--color-danger);
+  animation: countdown-pulse 1s ease-in-out infinite;
+}
+
+.countdown--danger .countdown-fill {
+  background: var(--color-danger);
+}
+
+@keyframes countdown-pulse {
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* ---- 相機 ---- */
+
+.camera-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 前鏡頭的預覽左右鏡像，存下來的照片不鏡像 */
+.camera-video--mirror {
+  transform: scaleX(-1);
+}
+
+/* ---- 照片牆 ---- */
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.photo-grid-item {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.photo-grid-item--flip {
+  animation: photo-flip var(--duration-slow) var(--ease-bounce) both;
+}
+
+.photo-grid-photo {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.photo-grid-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.photo-grid-check {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  display: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-surface);
+  font-size: var(--text-large);
+  font-weight: 900;
+}
+
+/* 選中：藍色外框加勾勾（SPEC 4.5） */
+.photo-grid-item--selected .photo-grid-photo {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent), var(--shadow);
+}
+
+.photo-grid-item--selected .photo-grid-check {
+  display: grid;
+}
+
+/* 自己的照片變灰，不能點 */
+.photo-grid-item--disabled .photo-grid-photo {
+  filter: grayscale(1);
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+.photo-grid-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+  min-height: var(--tap-size);
+}
+
+.photo-grid-name {
+  min-width: 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.photo-grid-zoom {
+  flex: none;
+  font-size: var(--text-body);
+}
+
+@keyframes photo-flip {
+  from {
+    opacity: 0;
+    transform: perspective(600px) rotateY(90deg);
+  }
+}
+
+/* ---- 放大檢視 ---- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-ink);
+  color: var(--color-surface);
+  animation: lightbox-in var(--duration) ease;
+}
+
+.lightbox-image {
+  max-width: 100%;
+  max-height: 75dvh;
+  border: var(--border);
+  border-color: var(--color-surface);
+  border-radius: var(--radius);
+}
+
+.lightbox-caption {
+  font-size: var(--text-large);
+  font-weight: 900;
+}
+
+.lightbox-close {
+  color: var(--color-ink);
+}
+
+@keyframes lightbox-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .countdown--danger .countdown-number {
+    animation: none;
+  }
+
+  @keyframes photo-flip {
+    from {
       opacity: 0;
     }
   }
