@@ -221,6 +221,7 @@
 ### 4.6 結果 `result.js`
 
 - 依票數由高到低列出候選人，出局者標紅。
+- 有重投的輪次：票數清單只列重投的人和重投票數。重投前就出局的人（`preEliminated`）不列在票數清單，只出現在出局名單。
 - 顯示「存活 n 人」。
 - 平手或全部棄權時，顯示「這輪沒人出局」。
 - 停留 6 秒後進入下一輪，或進入結束畫面。
@@ -339,6 +340,7 @@ rooms/{roomCode}
                                        preEliminated：重投前就確定出局的人（3.6 quota = 2、第一名一人、第二名平手），
                                        result.eliminated 會包含他們
     result: { tally: { [uid]: number }, eliminated: [uid], reason: "vote" | "tie" | "noVotes" }
+                                       有重投時 tally 是重投的票數
   ending
     winnerId: string
     worstPhotos: [{ round, uid }]
