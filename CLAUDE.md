@@ -46,7 +46,7 @@
 這些是已經決定好的事，不要提議改掉，除非使用者主動提起。
 
 - **只用 Firebase 免費 Spark 方案。** 不能用 Cloud Functions、Cloud Storage、Cloud Scheduler，也不能用任何需要綁卡的服務。因此：
-  - 遊戲推進（換階段、算票）由前端執行：任何在線的裝置都可以推進，用 transaction 確保只推進一次。詳見 SPEC 5.2。
+  - 遊戲推進（換階段、算票）由前端執行：任何在線的裝置都可以推進，用帶 `meta/step` + 1 的多路徑 update 確保只推進一次。詳見 SPEC 5.2。
   - 照片壓縮成 base64 JPEG，直接存在 Realtime Database。
   - 舊房間的清理，在有人建立新房間時順手執行，不靠排程。
 - **不使用建置工具和框架。** 不要加 React、Vite、webpack、TypeScript、Tailwind。瀏覽器直接執行 `index.html` 和 ES modules。
@@ -173,7 +173,7 @@ JavaScript 命名：
 │   ├── config.js             Firebase 設定、CDN 版本、各階段時間等常數
 │   ├── firebase.js           Firebase 初始化與讀寫封裝
 │   ├── rules.js              遊戲規則純函式
-│   ├── engine.js             遊戲推進：判斷是否該換階段，用 transaction 寫入
+│   ├── engine.js             遊戲推進：判斷是否該換階段，帶 step + 1 寫入
 │   ├── screens/              home, lobby, capture, reveal, vote, result, ending, bigscreen
 │   ├── components/           camera, countdown, photo-grid, qr-code, toast
 │   └── utils/                image（壓縮）, room-code, browser（偵測內建瀏覽器）

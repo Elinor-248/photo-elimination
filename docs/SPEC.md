@@ -278,28 +278,36 @@ ending → lobby（再來一局）
 |---|---|---|
 | `lobby` | 清空本局資料 | 房主按開始 |
 | `capture` | 抽題、`phaseEndsAt` = 現在 + 拍照時間 | 時間到，或所有存活玩家都已送出 |
-| `reveal` | 超時出局結果、本輪候選人 | 8 秒 |
+| `reveal` | 超時出局結果、本輪候選人、`phaseEndsAt` = 現在 + 8 秒 | 時間到 |
 | `vote` | `phaseEndsAt` = 現在 + 投票時間 | 時間到，或所有在線玩家都已投票 |
-| `revote` | 重投候選人、要淘汰的人數 | 同 `vote` |
-| `result` | 計票結果、出局者 | 6 秒 |
+| `revote` | 重投候選人、要淘汰的人數、重投前已出局的人、`phaseEndsAt` = 現在 + 投票時間 | 同 `vote` |
+| `result` | 計票結果、出局者、`phaseEndsAt` = 現在 + 6 秒 | 時間到 |
 | `ending` | 冠軍、回顧清單 | 房主按再來一局 |
 
 各階段的固定秒數（8 秒、6 秒）寫在 `config.js`。
+
+「時間到」的判斷：
+- 拍照：`phaseEndsAt` 之後再等 2 秒才結算，這段時間內送出的照片都算（和安全規則的 2 秒緩衝一致）。
+- 投票、重投：`phaseEndsAt` 之後再等 1 秒才結算，理由相同。
+- 投票提前結束只看在線玩家；沒有任何玩家在線時（例如只剩大螢幕），一律等時間到。
 
 ### 5.2 遊戲推進
 
 免費方案沒有伺服器端程式，所以遊戲推進由前端負責：
 
 - 每個在線的裝置（玩家和大螢幕）每 500ms 檢查一次：目前階段的結束條件是否已滿足。
-- 條件滿足時，對 `meta` 執行 transaction：只有 `phase` 和 `round` 還是自己看到的值時才寫入新階段。所以多台同時推進，也只會成功一次。
-- 計票、淘汰都在 transaction 裡呼叫 `rules.js` 完成，結果寫進 `rounds/{n}/result`。
+- 條件滿足時，用 `rules.js` 算出這一步的所有結果（抽題、超時、計票、淘汰、冠軍），和新的階段一起，用**一筆多路徑 update** 寫入，裡面一定包含 `meta/step` + 1。
+- 安全規則只接受 `step` 剛好加 1 的寫入，`phase`、`round`、`phaseEndsAt`、`hostId` 也只能在 `step` + 1 的寫入裡改。所以多台同時推進時，只有第一台成功，其他整筆被擋下（`permission_denied`，屬於正常情況），不會出現寫到一半的狀態。
+- 要寫什麼由 `engine.js` 的純函式 `planTransition` 決定，有自動測試；`startEngine` 負責每 500ms 檢查並送出。
+- 抽題用的亂數以 `createdAt` 和 `step` 當種子，同一步每台裝置抽到同一題。搶輸的裝置會先在本機套用自己算的結果、被擋下後才還原，用同一個種子，畫面上的題目才不會閃成別題。
+- 「開始遊戲」和「再來一局」由房主按下時寫入，同樣帶 `step` + 1。
 - 時間判斷一律用伺服器時間（本機時間 + `.info/serverTimeOffset`）。
 
 ### 5.3 身分與連線
 
 - 使用 Firebase Anonymous Auth，`auth.uid` 就是玩家 ID。重新整理後身分不會變，會自動回到原本的房間和階段。
-- 用 `onDisconnect` 維護 `players/{uid}/online`。
-- **房主轉移**：房主離線超過 10 秒，就由在線玩家中最早加入的人接任房主。這個轉移也用 transaction 寫入。
+- 用 `onDisconnect` 維護 `players/{uid}/online`，斷線時同時寫入 `offlineAt`（伺服器時間）。
+- **房主轉移**：房主離線超過 10 秒（依 `offlineAt` 判斷），或已經不在玩家名單上，就由在線玩家中最早加入的人接任房主。這個轉移和遊戲推進一樣，帶 `step` + 1 寫入。
 - 斷線玩家的處理：
   - 拍照時間內回來，照常可以送出。
   - 時間到還沒回來，照超時規則出局。
@@ -312,7 +320,8 @@ rooms/{roomCode}
   meta
     hostId: string
     phase: "lobby" | "capture" | "reveal" | "vote" | "revote" | "result" | "ending"
-    round: number                      從 1 開始
+    round: number                      從 1 開始，等待室時是 0
+    step: number                       推進編號，建房時 0，每次推進剛好加 1（見 5.2）
     phaseEndsAt: number                伺服器時間戳（ms）
     settings: { captureSec, voteSec, customOnly }
     usedPromptIds: { [promptId]: true }
@@ -322,6 +331,7 @@ rooms/{roomCode}
     name: string                       1～8 字
     joinedAt: number
     online: boolean
+    offlineAt: number                  最近一次斷線的伺服器時間，由 onDisconnect 寫入
     alive: boolean
     eliminatedRound: number | null
     eliminatedBy: "timeout" | "vote" | null
@@ -331,8 +341,9 @@ rooms/{roomCode}
     text: string                       1～20 字
     authorId: string
   rounds/{n}
-    prompt: { id, text, authorId | null }
-    photos/{uid}: string               base64 JPEG
+    prompt: { id, text, authorId | null, fallback: boolean }
+                                       fallback：「只用自訂題目」開啟、自訂題目用完後改抽內建題目，畫面要顯示提示
+    photos/{uid}: string               JPEG data URL（見 5.5）
     timeouts: { [uid]: true }
     candidates: { [uid]: true }
     votes/{voterUid}: targetUid
@@ -358,21 +369,35 @@ rooms/{roomCode}
 ### 5.6 安全規則重點（`firebase/database.rules.json`）
 
 - **登入**：所有讀寫都要先通過 Anonymous Auth。
-- **`players/{uid}`**：只有本人可以寫。房主可以刪除（踢人）。
-- **推進寫入的欄位**：遊戲推進由任何在線裝置執行（5.2），所以房間成員（玩家和大螢幕）都可以寫以下欄位，並驗證當下的 `meta.phase`：
+- **讀取**：
+  - `meta` 和 `players`：登入的人都可以讀，因為加入前要檢查房間狀態、人數和暱稱。
+  - 房間的其他資料：只有房間成員（`players` 或 `screens` 裡有自己）可以讀。
+  - `customPrompts` 房間成員都讀得到（推進時任何裝置都要抽題），「只看得到自己出的題目」是畫面上的限制。
+- **`players/{uid}`**：
+  - 加入：只能寫自己，而且只能在 `lobby` 時加入。
+  - `name` 只有本人能改，而且只能在 `lobby` 時改；`online`、`offlineAt` 只有本人能改。
+  - 刪除：本人可以刪自己；房主可以在 `lobby` 時刪別人（踢人）。
+  - 玩家資料一定要有 `name`、`joinedAt`、`alive`，所以被踢出後斷線時的 `onDisconnect` 寫入不會留下殘缺的資料。
+- **`meta`**：
+  - 房間成員都可以寫，因為推進需要。建房時，非成員可以寫入不存在的 `meta`，`hostId` 必須是自己。
+  - `step` 只能剛好加 1（建房時是 0）。`phase`、`round`、`phaseEndsAt`、`hostId` 只能在 `step` + 1 的寫入裡改（見 5.2）。
+  - `phase` 必須是合法值，`settings` 只能是 3.3 的選項。
+- **推進寫入的欄位**：遊戲推進由任何在線裝置執行（5.2），所以房間成員（玩家和大螢幕）都可以寫以下欄位：
   - `players/{uid}` 的 `alive`、`eliminatedRound`、`eliminatedBy`：只能在 `phase` 不是 `lobby` 時改（遊戲進行中，以及「再來一局」重設時）。
-  - `rounds/{n}` 的 `prompt`、`timeouts`、`candidates`、`revote`（不含 `votes`）、`result`。
+  - `rounds/{n}` 的 `prompt`、`timeouts`、`candidates`、`result`，以及 `revote` 的 `candidates`、`quota`、`preEliminated`（不含 `votes`）。
   - `ending`。
+  - 「再來一局」清空 `rounds` 和 `customPrompts`：只能在 `ending` 時。
+- **`customPrompts/{id}`**：只有玩家可以在 `lobby` 時出題，`authorId` 必須是自己；本人或房主可以刪除。
 - **`photos/{uid}`**：
-  - 只有本人可以寫，而且只能寫一次。
+  - 只有本人可以寫，而且只能寫一次。必須是存活玩家，輪次必須是目前的 `round`。
   - 只能在 `phase == "capture"` 且時間未到（含 2 秒緩衝）時寫入。
   - 字串長度不能超過 400000（和 5.5 的 `MAX_PHOTO_CHARS` 一致），而且開頭必須是 `data:image/jpeg;base64,`。
-- **`votes/{voterUid}`**：
-  - 只有本人可以寫。
-  - 不能投自己，投的對象必須是候選人。
-  - 只能在 `vote` 或 `revote` 階段寫入。
-- **`meta`**：房間成員都可以寫，因為推進需要，但要驗證 `phase` 是合法值。
-- **刪除房間**：只有 `updatedAt` 超過 24 小時的房間才能刪除。
+- **`votes/{voterUid}`、`revote/votes/{voterUid}`**：
+  - 只有本人可以寫，必須是玩家（大螢幕不能投）。時間到之前可以改票。
+  - 不能投自己，投的對象必須是本輪（或重投）的候選人。
+  - `votes` 只能在 `vote` 階段寫入，`revote/votes` 只能在 `revote` 階段寫入，輪次必須是目前的 `round`，時間未到（含 1 秒緩衝）。
+- **刪除房間**：只有 `updatedAt` 超過 24 小時的房間才能刪除。列出房間只允許「找過期房間」的查詢（依 `meta/updatedAt` 排序、截止時間在 24 小時前、最多 5 筆）。
+- **規則的長度限制**：暱稱和題目在規則裡用 UTF-16 長度檢查，上限放寬成兩倍（16、40），讓 emoji 也能通過；實際的字數上限由 `rules.js` 檢查。
 
 ### 5.7 外部資源
 

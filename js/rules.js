@@ -8,6 +8,11 @@ export const MAX_PROMPTS_PER_PLAYER = 3;
 export const PROMPT_MAX_LENGTH = 20;
 export const QUOTA_TWO_MIN_CANDIDATES = 7;
 
+// 設定（3.3）
+export const CAPTURE_SEC_OPTIONS = [30, 45, 60, 90, 120];
+export const VOTE_SEC_OPTIONS = [15, 30, 45, 60];
+export const DEFAULT_SETTINGS = { captureSec: 60, voteSec: 30, customOnly: false };
+
 function toIdList(ids) {
   if (!ids) return [];
   if (Array.isArray(ids)) return ids.filter((id) => id != null);
