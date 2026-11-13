@@ -348,7 +348,9 @@ rooms/{roomCode}
 
 - 用 `getUserMedia` 取得影像，再用 canvas 擷取。
 - 裁成 3:4，長邊 800px，輸出 JPEG，品質 0.7，目標 150KB 以下。
-- 壓縮後超過 300KB 就降低品質重新壓縮。
+- 照片存成完整的 data URL 字串（`data:image/jpeg;base64,...`），玩家手機和大螢幕都直接放進 `<img src>` 顯示。
+- 大小上限用**字串長度**判斷，前端和安全規則用同一個數字：`MAX_PHOTO_CHARS = 400000`（寫在 `config.js`，約等於 290KB 的 JPEG）。
+- 超過上限時依序重試，直到不超過為止：品質 0.5 → 品質 0.4 → 長邊縮成 600px、品質 0.4。一般照片第一次就會在上限內，重試只是保險。
 - 舊房間清理：建立新房間時，刪除 `updatedAt` 超過 24 小時的房間。
 
 ### 5.6 安全規則重點（`firebase/database.rules.json`）
@@ -362,7 +364,7 @@ rooms/{roomCode}
 - **`photos/{uid}`**：
   - 只有本人可以寫，而且只能寫一次。
   - 只能在 `phase == "capture"` 且時間未到（含 2 秒緩衝）時寫入。
-  - 字串長度不能超過 400000。
+  - 字串長度不能超過 400000（和 5.5 的 `MAX_PHOTO_CHARS` 一致），而且開頭必須是 `data:image/jpeg;base64,`。
 - **`votes/{voterUid}`**：
   - 只有本人可以寫。
   - 不能投自己，投的對象必須是候選人。
