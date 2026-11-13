@@ -33,7 +33,17 @@ export function openLightbox(src, caption) {
   overlay.querySelector('button').focus();
 }
 
-// items：[{ uid, name, src }]。回傳 { el, setSelected(uid), setDisabled(uid) }。
+// 沒拍到照片的人（超時）：灰底加大叉叉，不能點
+function missingPhoto(name) {
+  return h(
+    'div',
+    { class: 'photo-grid-photo photo-grid-photo--missing', role: 'img', 'aria-label': t('common.noPhotoOf', { name }) },
+    h('span', { class: 'photo-grid-cross', 'aria-hidden': 'true' }, '✕'),
+    h('span', { class: 'photo-grid-missing-label' }, t('common.noPhoto')),
+  );
+}
+
+// items：[{ uid, name, src, missing }]。回傳 { el, setSelected(uid), setDisabled(uid) }。
 export function createPhotoGrid({ items, mode = 'view', onSelect, flip = false }) {
   const cells = new Map();
 
@@ -41,9 +51,10 @@ export function createPhotoGrid({ items, mode = 'view', onSelect, flip = false }
     'ul',
     { class: 'photo-grid' },
     items.map((item, index) => {
-      const image = h('img', { class: 'photo-grid-image', src: item.src, alt: item.name });
-      const photo =
-        mode === 'vote'
+      const image = item.missing ? null : h('img', { class: 'photo-grid-image', src: item.src, alt: item.name });
+      const photo = item.missing
+        ? missingPhoto(item.name)
+        : mode === 'vote'
           ? h(
               'button',
               { class: 'photo-grid-photo', type: 'button', 'aria-label': t('vote.voteFor', { name: item.name }), onclick: () => onSelect(item.uid) },

@@ -1,7 +1,7 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { planTransition, planStart, planPlayAgain, seededRandom } from '../js/engine.js';
-import { CAPTURE_GRACE_MS, VOTE_GRACE_MS, REVEAL_MS, RESULT_MS, HOST_TIMEOUT_MS } from '../js/config.js';
+import { CAPTURE_GRACE_MS, VOTE_GRACE_MS, REVEAL_MS, RESULT_MS, HOST_TIMEOUT_MS, WINNER_REVEAL_MS } from '../js/config.js';
 
 const BUILTIN = [
   { id: 'color-red', text: '紅色的東西' },
@@ -103,13 +103,28 @@ describe('開始與拍照', () => {
     assert.equal(Object.keys(u).some((k) => k.startsWith('players/')), false);
   });
 
-  test('超時後只剩 1 人：直接結束，他是冠軍', () => {
+  test('超時後只剩 1 人：先揭曉 5 秒，超時的人標記出局', () => {
     const room = makeRoom({ phase: 'capture', round: 1, rounds: { 1: { photos: photosOf(['B']) } } });
+    const u = planTransition(room, NOW, BUILTIN);
+    assert.equal(u['meta/phase'], 'reveal');
+    assert.equal(u['meta/phaseEndsAt'], NOW + WINNER_REVEAL_MS);
+    assert.deepEqual(u['rounds/1/timeouts'], { A: true, C: true });
+    assert.deepEqual(u['rounds/1/candidates'], { B: true });
+    assert.equal(u['players/A/alive'], false);
+    assert.equal(u['players/C/alive'], false);
+    assert.equal(u.ending, undefined);
+  });
+
+  test('只剩 1 人的揭曉結束：進入結束畫面，他是冠軍', () => {
+    const room = makeRoom({ phase: 'reveal', round: 1, dead: ['A', 'C'] });
     const u = planTransition(room, NOW, BUILTIN);
     assert.equal(u['meta/phase'], 'ending');
     assert.equal(u.ending.winnerId, 'B');
-    assert.equal(u['players/A/alive'], false);
-    assert.equal(u['players/C/alive'], false);
+  });
+
+  test('只剩 1 人的揭曉還沒到時間：不推進', () => {
+    const room = makeRoom({ phase: 'reveal', round: 1, dead: ['A', 'C'], phaseEndsAt: NOW + 1000 });
+    assert.equal(planTransition(room, NOW, BUILTIN), null);
   });
 
   test('題目全部用完：重新開放，已用紀錄整個換掉', () => {

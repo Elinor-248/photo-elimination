@@ -24,6 +24,7 @@ import {
   RESULT_MS,
   REVEAL_MS,
   VOTE_GRACE_MS,
+  WINNER_REVEAL_MS,
 } from './config.js';
 
 function keys(obj) {
@@ -120,7 +121,7 @@ function planCapture(room, now, builtinPrompts, random) {
   const allSubmitted = alive.every((uid) => photos[uid] != null);
   if (!allSubmitted && !isTimeUp(room, now, CAPTURE_GRACE_MS)) return null;
 
-  const { outcome, timedOut, candidates, winnerId } = applyTimeouts(alive, keys(photos));
+  const { outcome, timedOut, candidates } = applyTimeouts(alive, keys(photos));
   if (outcome === 'void') return enterCapture(room, n, now, builtinPrompts, random);
 
   const roundUpdates = {
@@ -128,18 +129,19 @@ function planCapture(room, now, builtinPrompts, random) {
     [`rounds/${n}/timeouts`]: timedOut.length > 0 ? toTrueMap(timedOut) : null,
     [`rounds/${n}/candidates`]: toTrueMap(candidates),
   };
-  if (outcome === 'winner') return enterEnding(room, now, winnerId, roundUpdates);
-
+  // 超時後只剩 1 人也先揭曉，讓大家看到誰沒拍到，停留時間比較短，結束後直接進結束畫面
   return {
     ...stepUpdates(room, now),
     ...roundUpdates,
     'meta/phase': 'reveal',
-    'meta/phaseEndsAt': now + REVEAL_MS,
+    'meta/phaseEndsAt': now + (outcome === 'winner' ? WINNER_REVEAL_MS : REVEAL_MS),
   };
 }
 
 function planReveal(room, now) {
   if (!isTimeUp(room, now, 0)) return null;
+  const winnerId = getWinner(room.players);
+  if (winnerId) return enterEnding(room, now, winnerId);
   return {
     ...stepUpdates(room, now),
     'meta/phase': 'vote',

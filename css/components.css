@@ -437,6 +437,30 @@
   font-weight: 900;
 }
 
+/* 沒拍到：灰底加大叉叉 */
+.photo-grid-photo--missing {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-1);
+  background: var(--color-bg);
+  border-style: dashed;
+  border-color: var(--color-muted);
+  box-shadow: none;
+  color: var(--color-danger);
+}
+
+.photo-grid-cross {
+  font-size: 64px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.photo-grid-missing-label {
+  color: var(--color-muted);
+  font-weight: 700;
+}
+
 /* 選中：藍色外框加勾勾（SPEC 4.5） */
 .photo-grid-item--selected .photo-grid-photo {
   border-color: var(--color-accent);

@@ -29,6 +29,8 @@ export default {
     promptFallback: '自訂題目用完了，改用內建題庫',
     zoom: '放大看 {name} 的照片',
     close: '關閉',
+    noPhoto: '沒拍到',
+    noPhotoOf: '{name} 沒拍到照片',
   },
   lobby: {
     roomCode: '房號',
@@ -86,6 +88,8 @@ export default {
     title: '揭曉！',
     hint: '看清楚，等一下要投票',
     timeouts: '超時出局：{names}',
+    winnerTitle: '只剩 {name}，冠軍出爐！',
+    winnerHint: '其他人都沒拍到，馬上揭曉冠軍',
   },
   vote: {
     title: '投給拍最爛的人',
@@ -103,6 +107,8 @@ export default {
   },
   ending: {
     champion: '冠軍',
+    toReview: '看最爛照片回顧 →',
+    backToChampion: '← 冠軍',
     review: '最爛照片回顧',
     reviewHint: '左右滑動看每一輪',
     reviewEmpty: '這局沒有人被投票淘汰',

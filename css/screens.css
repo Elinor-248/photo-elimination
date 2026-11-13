@@ -368,6 +368,11 @@
   text-align: center;
 }
 
+.reveal-winner-title {
+  font-size: var(--text-title);
+  color: var(--color-primary);
+}
+
 /* ---- 結果 ---- */
 
 .result-headline {
@@ -459,6 +464,15 @@
 }
 
 /* ---- 結束 ---- */
+
+.ending-page {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.ending-back {
+  justify-self: start;
+}
 
 .ending-winner {
   padding: var(--space-5) var(--space-4);

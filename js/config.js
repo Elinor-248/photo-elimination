@@ -30,6 +30,8 @@ export const EMULATOR_CONFIG = {
 // 各階段的固定時間
 export const REVEAL_MS = 8000;
 export const RESULT_MS = 6000;
+// 超時後只剩 1 人時，揭曉停留比較短，接著進結束畫面
+export const WINNER_REVEAL_MS = 5000;
 
 // 時間到之後再等一下才結算，這段時間內寫入的照片和票都算（安全規則用同樣的數字）
 export const CAPTURE_GRACE_MS = 2000;
