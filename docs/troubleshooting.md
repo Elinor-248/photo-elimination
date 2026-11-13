@@ -61,3 +61,12 @@
 - 原因：相機只能在安全來源（HTTPS 或 localhost）使用。
 - 解法：部署到 GitHub Pages 的測試分支，或使用 HTTPS 通道再用手機測試。
 - 怎麼預防：已寫在 SPEC 5.8。
+
+## T05 `node --test tests/` 失敗：Cannot find module
+
+- 日期：2026-11-13
+- 相關檔案：tests/rules.test.js、CLAUDE.md、docs/testing.md
+- 症狀：Node v24 執行 `node --test tests/`，只回報 1 個失敗的測試，名稱是 `tests`，錯誤訊息是 `Error: Cannot find module '.../tests'`。測試檔本身沒有被執行。
+- 原因：新版 Node（實測 v24）的 `--test` 參數只接受檔案或 glob，不再展開資料夾，所以 `tests/` 被當成一個要執行的模組。
+- 解法：改用 `node --test`，不加參數。Node 會自動找出 `**/*.test.js`（排除 `node_modules`）。
+- 怎麼預防：CLAUDE.md 和 testing.md 的指令都改成 `node --test`。之後如果要指定範圍，用加引號的 glob，例如 `node --test "tests/**/*.test.js"`。
