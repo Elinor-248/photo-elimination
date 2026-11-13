@@ -354,7 +354,11 @@ rooms/{roomCode}
 ### 5.6 安全規則重點（`firebase/database.rules.json`）
 
 - **登入**：所有讀寫都要先通過 Anonymous Auth。
-- **`players/{uid}`**：只有本人可以寫。房主可以刪除（踢人），也可以改 `alive`、`eliminatedRound`、`eliminatedBy`（由推進寫入）。
+- **`players/{uid}`**：只有本人可以寫。房主可以刪除（踢人）。
+- **推進寫入的欄位**：遊戲推進由任何在線裝置執行（5.2），所以房間成員（玩家和大螢幕）都可以寫以下欄位，並驗證當下的 `meta.phase`：
+  - `players/{uid}` 的 `alive`、`eliminatedRound`、`eliminatedBy`：只能在 `phase` 不是 `lobby` 時改（遊戲進行中，以及「再來一局」重設時）。
+  - `rounds/{n}` 的 `prompt`、`timeouts`、`candidates`、`revote`（不含 `votes`）、`result`。
+  - `ending`。
 - **`photos/{uid}`**：
   - 只有本人可以寫，而且只能寫一次。
   - 只能在 `phase == "capture"` 且時間未到（含 2 秒緩衝）時寫入。
