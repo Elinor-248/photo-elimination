@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "default": "demo-photo-elimination",
+    "prod": "photo-elimination"
+  }
+}

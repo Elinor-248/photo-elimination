@@ -60,4 +60,24 @@
 - 症狀：用 `http://192.168.x.x:8000` 開啟時，`navigator.mediaDevices` 是 `undefined`。
 - 原因：相機只能在安全來源（HTTPS 或 localhost）使用。
 - 解法：部署到 GitHub Pages 的測試分支，或使用 HTTPS 通道再用手機測試。
-- 怎麼預防：已寫在 SPEC 5.9。
+- 怎麼預防：已寫在 SPEC 5.8。
+
+## T05 `node --test tests/` 失敗：Cannot find module
+
+- 日期：2026-11-13
+- 相關檔案：tests/rules.test.js、CLAUDE.md、docs/testing.md
+- 症狀：Node v24 執行 `node --test tests/`，只回報 1 個失敗的測試，名稱是 `tests`，錯誤訊息是 `Error: Cannot find module '.../tests'`。測試檔本身沒有被執行。
+- 原因：新版 Node（實測 v24）的 `--test` 參數只接受檔案或 glob，不再展開資料夾，所以 `tests/` 被當成一個要執行的模組。
+- 解法：改用 `node --test`，不加參數。Node 會自動找出 `**/*.test.js`（排除 `node_modules`）。
+- 怎麼預防：CLAUDE.md 和 testing.md 的指令都改成 `node --test`。之後如果要指定範圍，用加引號的 glob，例如 `node --test "tests/**/*.test.js"`。
+
+## T06 用 REST 對 Auth 模擬器註冊，拿到的 token 寫資料都是 Permission denied
+
+- 日期：2026-11-13
+- 相關檔案：tests/database-rules.test.js
+- 症狀：`POST .../accounts:signUp` 有回傳 `idToken` 和 `localId`，但拿這個 token 對 Database 模擬器寫入，連規則明明允許的寫入都回 `{"error":"Permission denied"}`。
+- 原因：請求沒有帶 `Content-Type: application/json`，body 裡的 `returnSecureToken: true` 沒被讀到，拿到的 token 不能當成登入身分使用。錯誤訊息完全沒提到 header。
+- 試過沒用的方法：一開始以為是規則寫錯；用另一支帶了 header 的腳本測同一筆寫入是成功的，才發現差在請求本身。
+- 解法：`signUp` 的 fetch 加上 `headers: { 'Content-Type': 'application/json' }`。
+- 怎麼預防：之後寫任何打模擬器 REST API 的測試，都要帶 `Content-Type`。遇到「全部允許的寫入都被擋」時，先懷疑身分，再懷疑規則。
+
