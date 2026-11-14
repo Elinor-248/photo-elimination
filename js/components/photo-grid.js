@@ -14,6 +14,21 @@ export function candidateItems(room, candidateIds) {
     .map((uid) => ({ uid, name: room.players?.[uid]?.name ?? '', src: round.photos[uid] }));
 }
 
+// 揭曉用：候選人的照片加上超時的人（用叉叉標示沒拍到），依加入順序排列
+export function revealItems(room) {
+  const round = room.rounds?.[room.meta.round] ?? {};
+  const missing = Object.keys(round.timeouts ?? {}).map((uid) => ({ uid, name: room.players?.[uid]?.name ?? '', missing: true }));
+  return [...candidateItems(room, round.candidates), ...missing].sort(
+    (a, b) => (room.players?.[a.uid]?.joinedAt ?? 0) - (room.players?.[b.uid]?.joinedAt ?? 0),
+  );
+}
+
+// 超時後只剩 1 人時回傳他的暱稱：揭曉完直接進結束畫面（SPEC 3.5）
+export function soleSurvivorName(room) {
+  const alive = Object.values(room.players ?? {}).filter((p) => p.alive);
+  return alive.length === 1 ? alive[0].name : null;
+}
+
 export function openLightbox(src, caption) {
   const onKey = (event) => event.key === 'Escape' && close();
   const close = () => {

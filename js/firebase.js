@@ -78,13 +78,14 @@ export function watchRoom(code, callback, onError) {
   return onValue(roomRef(code), (snap) => callback(snap.val()), onError);
 }
 
-// 維護 players/{uid}/online 和 offlineAt。每次重新連線都重新登記 onDisconnect。
-export function startPresence(code) {
-  const me = roomRef(code, `players/${uid}`);
+// 維護 players/{uid}/online 和 offlineAt（大螢幕是 screens/{uid}/online）。每次重新連線都重新登記 onDisconnect。
+export function startPresence(code, { asScreen = false } = {}) {
+  const me = roomRef(code, `${asScreen ? 'screens' : 'players'}/${uid}`);
+  const offline = asScreen ? { online: false } : { online: false, offlineAt: serverTimestamp() };
   return onValue(ref(database, '.info/connected'), async (snap) => {
     if (snap.val() !== true) return;
     try {
-      await onDisconnect(me).update({ online: false, offlineAt: serverTimestamp() });
+      await onDisconnect(me).update(offline);
       await update(me, { online: true });
     } catch {
       // 已經不在房間裡（被踢出），不用維護
@@ -155,6 +156,13 @@ export async function joinRoom(code, name) {
     // 檢查之後遊戲剛好開始
     return 'started';
   }
+}
+
+// 大螢幕（SPEC 4.9）：不是玩家，不算人數，遊戲中也可以連上。回傳錯誤代碼，成功時回傳 null。
+export async function joinAsScreen(code) {
+  if (!(await get(roomRef(code, 'meta'))).exists()) return 'notFound';
+  await set(roomRef(code, `screens/${uid}`), { online: true });
+  return null;
 }
 
 // ---- 等待室 ----

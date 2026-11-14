@@ -22,6 +22,11 @@ export default {
     inAppBrowserHint: '點右上角的選單，選「用瀏覽器開啟」，或複製連結貼到 Safari、Chrome。',
     copyLink: '複製連結',
     copied: '複製好了，貼到 Safari 或 Chrome 開啟',
+    screenMode: '大螢幕模式（投影用）',
+    screenTitle: '大螢幕模式',
+    screenHint: '給投影或電視用，不算玩家人數。自己也要玩的話，在同一台電腦用無痕視窗開大螢幕。',
+    connectScreen: '連到這個房間',
+    backToPlayer: '回到玩家模式',
   },
   common: {
     round: '第 {n} 輪',
@@ -115,6 +120,11 @@ export default {
     slidePrompt: '第 {n} 輪・{prompt}',
     playAgain: '再來一局',
     waitHost: '等房主開新局',
+  },
+  bigscreen: {
+    joinHint: '用手機打開這個網站，輸入房號加入',
+    waitHost: '等房主開始遊戲',
+    quota: '這次淘汰 {n} 人',
   },
   errors: {
     notFound: '找不到這個房間，檢查一下房號',

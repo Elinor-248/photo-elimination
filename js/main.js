@@ -3,6 +3,7 @@ import {
   applyRoomUpdates,
   init,
   isInRoom,
+  joinAsScreen,
   serverNow,
   startPresence,
   watchConnection,
@@ -22,9 +23,10 @@ import * as reveal from './screens/reveal.js';
 import * as vote from './screens/vote.js';
 import * as result from './screens/result.js';
 import * as ending from './screens/ending.js';
+import * as bigscreen from './screens/bigscreen.js';
 
 // 畫面名稱就是 meta.phase；投票和重投共用 vote.js，但切換時要重畫，所以分成兩個名稱
-const SCREENS = { home, lobby, capture, reveal, vote, revote: vote, result, ending };
+const SCREENS = { home, lobby, capture, reveal, vote, revote: vote, result, ending, bigscreen };
 // 觀眾頂部常駐提示的階段（SPEC 4.8）
 const OBSERVER_PHASES = ['capture', 'reveal', 'vote', 'revote', 'result'];
 
@@ -39,7 +41,9 @@ const state = {
   builtinPrompts: [],
   // 從別人分享的 ?room= 連結進來、還沒加入時的房號
   prefillRoom: null,
-  actions: { enterRoom, startGame, playAgain, clearPrefill },
+  // 大螢幕模式（?mode=screen，SPEC 4.9）
+  screenMode: false,
+  actions: { enterRoom, startGame, playAgain, clearPrefill, setScreenMode, connectScreen },
 };
 
 let currentScreen = null;
@@ -47,7 +51,7 @@ let stopRoom = [];
 
 function screenName() {
   if (!state.code || !state.room) return 'home';
-  return state.room.meta.phase;
+  return state.screenMode ? 'bigscreen' : state.room.meta.phase;
 }
 
 function me() {
@@ -64,6 +68,8 @@ function show() {
   const name = screenName();
   updateCamera(name);
   roleBanner.hidden = !(OBSERVER_PHASES.includes(name) && me() && !me().alive);
+  // 大螢幕不受手機版 480px 寬度限制
+  document.body.classList.toggle('bigscreen-mode', name === 'bigscreen');
   if (name !== currentScreen) {
     SCREENS[currentScreen]?.destroy();
     container.replaceChildren();
@@ -73,7 +79,11 @@ function show() {
 }
 
 function setUrlRoom(code) {
-  history.replaceState(null, '', code ? `?room=${code}` : location.pathname);
+  const params = new URLSearchParams();
+  if (state.screenMode) params.set('mode', 'screen');
+  if (code) params.set('room', code);
+  const search = params.toString();
+  history.replaceState(null, '', search ? `?${search}` : location.pathname);
 }
 
 async function enterRoom(code) {
@@ -93,14 +103,15 @@ async function enterRoom(code) {
     code,
     (room) => {
       if (!room?.meta) return leaveOnce('app.roomGone');
-      if (!room.players?.[state.uid]) return leaveOnce('app.kicked');
+      // 大螢幕不在玩家名單裡，不會被踢
+      if (!state.screenMode && !room.players?.[state.uid]) return leaveOnce('app.kicked');
       state.room = room;
       show();
     },
     // 被移出房間後就沒有讀取權限，監聽會被取消
     () => leaveOnce('app.kicked'),
   );
-  const stopPresence = startPresence(code);
+  const stopPresence = startPresence(code, { asScreen: state.screenMode });
   const stopEngine = startEngine({
     getRoom: () => state.room,
     now: serverNow,
@@ -120,13 +131,32 @@ function leaveToHome(messageKey) {
   if (messageKey) showToast(t(messageKey), { tone: 'error' });
 }
 
-function clearPrefill() {
-  state.prefillRoom = null;
-  setUrlRoom(null);
-  // 首頁要整個重畫成一般模式
+// 首頁換模式時要整個重畫
+function redrawHome() {
   currentScreen = null;
   home.destroy();
   show();
+}
+
+function clearPrefill() {
+  state.prefillRoom = null;
+  setUrlRoom(null);
+  redrawHome();
+}
+
+function setScreenMode(on) {
+  state.screenMode = on;
+  state.prefillRoom = null;
+  setUrlRoom(null);
+  redrawHome();
+}
+
+// 大螢幕連到房間。回傳錯誤代碼，成功時回傳 null。
+async function connectScreen(code) {
+  const error = await joinAsScreen(code);
+  if (error) return error;
+  await enterRoom(code);
+  return null;
 }
 
 // 房主按開始。回傳錯誤代碼，成功時回傳 null。
@@ -166,10 +196,18 @@ async function boot() {
   }
   watchBanner();
 
-  const code = new URLSearchParams(location.search).get('room');
+  const params = new URLSearchParams(location.search);
+  const code = params.get('room');
+  state.screenMode = params.get('mode') === 'screen';
   if (code && isRoomCode(code)) {
-    // 重新整理：已經在房間名單裡就直接回去
-    if (await isInRoom(code)) return enterRoom(code);
+    if (state.screenMode) {
+      // 大螢幕直接連上；房間不存在就留在首頁，房號先填好
+      if (!(await connectScreen(code))) return;
+      showToast(t('errors.notFound'), { tone: 'error' });
+    } else if (await isInRoom(code)) {
+      // 重新整理：已經在房間名單裡就直接回去
+      return enterRoom(code);
+    }
     state.prefillRoom = code;
   }
   show();

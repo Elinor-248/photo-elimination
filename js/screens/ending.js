@@ -3,60 +3,14 @@
 import { h } from '../utils/dom.js';
 import { t } from '../utils/i18n.js';
 import { showToast } from '../components/toast.js';
-
-const AUTO_ADVANCE_MS = 4000;
+import { createWorstCarousel } from '../components/worst-carousel.js';
 
 let ui = null;
-
-function slides(room) {
-  return (room.ending?.worstPhotos ?? [])
-    .map(({ round, uid }) => {
-      const data = room.rounds?.[round];
-      const photo = data?.photos?.[uid];
-      if (!photo) return null;
-      const votes = data.result?.tally?.[uid];
-      return h(
-        'figure',
-        { class: 'ending-slide' },
-        h('img', { class: 'ending-slide-image', src: photo, alt: room.players?.[uid]?.name ?? '' }),
-        h(
-          'figcaption',
-          { class: 'ending-slide-caption' },
-          h('span', { class: 'ending-slide-prompt' }, t('ending.slidePrompt', { n: round, prompt: data.prompt?.text ?? '' })),
-          h('span', { class: 'ending-slide-name' }, room.players?.[uid]?.name ?? ''),
-          votes != null ? h('span', { class: 'ending-slide-votes' }, t('result.votes', { n: votes })) : null,
-        ),
-      );
-    })
-    .filter(Boolean);
-}
-
-// 每 4 秒捲到下一張；使用者自己滑的時候重新計時
-function startCarousel(track, count) {
-  if (count < 2) return () => {};
-  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const next = () => {
-    // 回顧頁隱藏時寬度是 0，不捲
-    if (!track.clientWidth) return;
-    const index = Math.round(track.scrollLeft / track.clientWidth);
-    const target = (index + 1) % count;
-    track.scrollTo({ left: target * track.clientWidth, behavior: reduceMotion ? 'auto' : 'smooth' });
-  };
-  let timer = setInterval(next, AUTO_ADVANCE_MS);
-  const restart = () => {
-    clearInterval(timer);
-    timer = setInterval(next, AUTO_ADVANCE_MS);
-  };
-  track.addEventListener('pointerdown', restart);
-  track.addEventListener('touchstart', restart, { passive: true });
-  return () => clearInterval(timer);
-}
 
 function mount(container, state) {
   const { room } = state;
   const winner = room.players?.[room.ending?.winnerId]?.name ?? '';
-  const items = slides(room);
-  const track = h('div', { class: 'ending-carousel' }, items);
+  const carousel = createWorstCarousel(room);
   const footer = h('footer', { class: 'ending-footer' });
 
   const championPage = h(
@@ -73,7 +27,7 @@ function mount(container, state) {
       'section',
       { class: 'ending-review' },
       h('h2', { class: 'screen-title' }, t('ending.review')),
-      items.length > 0 ? [h('p', { class: 'screen-hint' }, t('ending.reviewHint')), track] : h('p', { class: 'screen-hint' }, t('ending.reviewEmpty')),
+      carousel.count > 0 ? [h('p', { class: 'screen-hint' }, t('ending.reviewHint')), carousel.el] : h('p', { class: 'screen-hint' }, t('ending.reviewEmpty')),
     ),
     footer,
   );
@@ -85,7 +39,7 @@ function mount(container, state) {
   }
 
   container.replaceChildren(h('section', { class: 'ending' }, championPage, reviewPage));
-  ui = { footer, stopCarousel: startCarousel(track, items.length) };
+  ui = { footer, stopCarousel: carousel.stop };
 }
 
 export function render(container, state) {

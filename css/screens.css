@@ -505,56 +505,6 @@
   gap: var(--space-2);
 }
 
-.ending-carousel {
-  display: flex;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  scrollbar-width: none;
-}
-
-.ending-carousel::-webkit-scrollbar {
-  display: none;
-}
-
-.ending-slide {
-  flex: 0 0 100%;
-  display: grid;
-  gap: var(--space-2);
-  margin: 0;
-  padding: var(--space-1);
-  scroll-snap-align: center;
-}
-
-.ending-slide-image {
-  width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  border: var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-}
-
-.ending-slide-caption {
-  display: grid;
-  text-align: center;
-}
-
-.ending-slide-prompt {
-  color: var(--color-muted);
-  font-size: var(--text-small);
-  font-weight: 700;
-}
-
-.ending-slide-name {
-  font-size: var(--text-large);
-  font-weight: 900;
-}
-
-.ending-slide-votes {
-  color: var(--color-danger);
-  font-weight: 700;
-}
-
 .ending-footer {
   position: sticky;
   bottom: var(--space-4);
@@ -576,5 +526,315 @@
     from {
       opacity: 0;
     }
+  }
+}
+
+/* ---- 大螢幕（SPEC 4.9）：16:9 橫式，尺寸跟著螢幕高度走 ---- */
+
+.bigscreen-mode .app {
+  max-width: none;
+  padding: 3vh 4vw;
+}
+
+.bigscreen {
+  display: grid;
+  align-content: start;
+  gap: 2.5vh;
+  min-height: 92vh;
+}
+
+/* 題目在大螢幕至少 64px（SPEC 2.3） */
+.bigscreen .prompt-card-text {
+  font-size: max(64px, 7vh);
+}
+
+.bigscreen .prompt-card-round,
+.bigscreen .prompt-card-author,
+.bigscreen .prompt-card-notice {
+  font-size: max(var(--text-body), 2.6vh);
+}
+
+.bigscreen-countdown .countdown-number {
+  font-size: max(48px, 6vh);
+}
+
+.bigscreen-countdown .countdown-bar {
+  height: max(16px, 2.5vh);
+}
+
+.bigscreen-label,
+.bigscreen-section-title {
+  font-size: max(var(--text-large), 4.5vh);
+  font-weight: 900;
+}
+
+.bigscreen-note {
+  color: var(--color-muted);
+  font-size: max(var(--text-body), 3vh);
+  font-weight: 700;
+  text-align: center;
+}
+
+.bigscreen-note--danger {
+  color: var(--color-danger);
+}
+
+.bigscreen-title {
+  font-size: max(var(--text-title), 6vh);
+  font-weight: 900;
+  line-height: 1.2;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.bigscreen-subtitle {
+  display: block;
+  color: var(--color-muted);
+  font-size: max(var(--text-body), 3vh);
+}
+
+.bigscreen-title--winner {
+  color: var(--color-primary);
+}
+
+.bigscreen-title--out {
+  color: var(--color-danger);
+}
+
+.bigscreen-progress {
+  font-size: max(var(--text-large), 4vh);
+  font-weight: 900;
+  text-align: center;
+}
+
+.bigscreen .wait-note {
+  font-size: max(var(--text-large), 4vh);
+}
+
+/* 等待室：左邊超大房號，右邊玩家名單 */
+.bigscreen-lobby {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 4vw;
+  min-height: 88vh;
+}
+
+.bigscreen-lobby-code,
+.bigscreen-lobby-players {
+  display: grid;
+  justify-items: center;
+  gap: 3vh;
+}
+
+.bigscreen-code {
+  padding: 0 4vw;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-secondary);
+  box-shadow: var(--shadow);
+  font-size: 24vh;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.bigscreen-players {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5vh 1vw;
+}
+
+.bigscreen-player {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 1vh 2vw;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+  font-size: max(var(--text-large), 3.5vh);
+  font-weight: 900;
+  transition:
+    background-color var(--duration) ease,
+    color var(--duration) ease;
+}
+
+.bigscreen-player--offline {
+  border-color: var(--color-muted);
+  color: var(--color-muted);
+  box-shadow: none;
+}
+
+/* 拍照：還沒交的人淡一點，交了的人亮起 */
+.bigscreen-players--status .bigscreen-player {
+  color: var(--color-muted);
+}
+
+.bigscreen-players--status .bigscreen-player--done {
+  background: var(--color-success);
+  color: var(--color-surface);
+}
+
+/* 照片牆：依人數排成 1 或 2 排，照片高度跟著排數算 */
+.bigscreen-wall {
+  --wall-height: 52vh;
+  grid-template-columns: repeat(var(--cols), auto);
+  justify-content: center;
+  gap: 1.5vh 2vw;
+}
+
+.bigscreen-wall .photo-grid-photo {
+  width: auto;
+  height: calc(var(--wall-height) / var(--rows));
+}
+
+.bigscreen-wall .photo-grid-name {
+  font-size: max(var(--text-body), 2.6vh);
+}
+
+.bigscreen-wall .photo-grid-cross {
+  font-size: 10vh;
+}
+
+/* 結果：出局者照片放大，票數長條 */
+.bigscreen-result {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4vw;
+}
+
+.bigscreen-out-photos {
+  display: flex;
+  gap: 2vw;
+}
+
+.bigscreen-out-photo {
+  display: grid;
+  gap: 1vh;
+  margin: 0;
+  animation: result-shake var(--duration-slow) ease 300ms;
+}
+
+.bigscreen-out-photo img {
+  height: 48vh;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border: var(--border);
+  border-color: var(--color-danger);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.bigscreen-out-photo figcaption {
+  color: var(--color-danger);
+  font-size: max(var(--text-large), 3.5vh);
+  font-weight: 900;
+  text-align: center;
+}
+
+.bigscreen-bars {
+  display: grid;
+  flex: 1;
+  max-width: 60vw;
+  gap: 1.5vh;
+}
+
+.bigscreen-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 14vw) 1fr auto;
+  align-items: center;
+  gap: 1vw;
+  font-size: max(var(--text-large), 3vh);
+  font-weight: 900;
+}
+
+.bigscreen-bar-name {
+  overflow-wrap: anywhere;
+}
+
+.bigscreen-bar-track {
+  height: 4vh;
+  overflow: hidden;
+  border: var(--border-thin);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+
+.bigscreen-bar-fill {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--color-accent);
+  transition: width var(--duration-slow) ease-out;
+}
+
+.bigscreen-bar--out {
+  color: var(--color-danger);
+}
+
+.bigscreen-bar--out .bigscreen-bar-fill {
+  background: var(--color-danger);
+}
+
+/* 結束：冠軍頁和回顧頁 */
+.bigscreen-page {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 4vh;
+  min-height: 85vh;
+}
+
+.bigscreen-back {
+  justify-self: start;
+}
+
+.bigscreen-winner {
+  padding: 4vh 6vw;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--color-secondary);
+  box-shadow: var(--shadow);
+  text-align: center;
+  animation: ending-pop var(--duration-slow) var(--ease-bounce);
+}
+
+.bigscreen-crown {
+  font-size: 12vh;
+  line-height: 1;
+}
+
+.bigscreen-winner-name {
+  font-size: 14vh;
+  font-weight: 900;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.bigscreen-review .carousel {
+  width: 48vh;
+}
+
+.bigscreen-review .carousel-slide-name {
+  font-size: max(var(--text-large), 4vh);
+}
+
+.bigscreen-review .carousel-slide-prompt,
+.bigscreen-review .carousel-slide-votes {
+  font-size: max(var(--text-body), 2.6vh);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bigscreen-out-photo {
+    animation: none;
+  }
+
+  .bigscreen-bar-fill {
+    transition: none;
   }
 }

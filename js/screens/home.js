@@ -102,8 +102,32 @@ export function render(container, state) {
     nameInput,
   );
 
+  function onConnectScreen(code) {
+    submit(async () => {
+      if (!isRoomCode(code)) return showError('roomCodeInvalid');
+      const error = await state.actions.connectScreen(code);
+      if (error) showError(error);
+    });
+  }
+
   let actions;
-  if (state.prefillRoom) {
+  let footer = null;
+  if (state.screenMode) {
+    // 大螢幕模式：不用暱稱，只要房號（SPEC 4.9）
+    const connect = h('button', { class: 'button button--primary button--block', type: 'submit' }, t('home.connectScreen'));
+    const back = h('button', { class: 'home-link', type: 'button', onclick: () => state.actions.setScreenMode(false) }, t('home.backToPlayer'));
+    buttons.push(connect, back);
+    if (state.prefillRoom) roomInput.value = state.prefillRoom;
+    actions = h(
+      'form',
+      { class: 'card home-card', onsubmit: (e) => (e.preventDefault(), onConnectScreen(roomInput.value.trim())) },
+      h('h2', { class: 'card-title' }, t('home.screenTitle')),
+      h('p', { class: 'card-hint' }, t('home.screenHint')),
+      h('div', { class: 'field' }, h('label', { class: 'field-label', for: 'home-room' }, t('home.roomLabel')), roomInput),
+      connect,
+      back,
+    );
+  } else if (state.prefillRoom) {
     // 從別人分享的連結進來：只留暱稱和加入
     const join = h('button', { class: 'button button--primary button--block', type: 'submit' }, t('home.joinRoomNumber', { code: state.prefillRoom }));
     const other = h('button', { class: 'home-link', type: 'button', onclick: () => state.actions.clearPrefill() }, t('home.otherRoom'));
@@ -132,6 +156,9 @@ export function render(container, state) {
         h('div', { class: 'input-row' }, roomInput, join),
       ),
     );
+    const screen = h('button', { class: 'home-link', type: 'button', onclick: () => state.actions.setScreenMode(true) }, t('home.screenMode'));
+    buttons.push(screen);
+    footer = screen;
   }
 
   view = h(
@@ -140,6 +167,7 @@ export function render(container, state) {
     h('header', { class: 'home-header' }, h('h1', { class: 'home-title' }, t('app.title')), h('p', { class: 'home-tagline' }, t('app.tagline'))),
     isInAppBrowser() ? inAppWarning() : null,
     actions,
+    footer,
   );
   container.append(view);
 }
