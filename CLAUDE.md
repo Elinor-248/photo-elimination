@@ -95,6 +95,7 @@
 - 手機要用 HTTPS 才能開相機，`http://` 加區網 IP 不行。（T04）
 - 跑測試用 `node --test`，不要加 `tests/`：新版 Node（實測 v24）會把資料夾參數當成檔案，會出現 `Cannot find module`。（T05）
 - 用 REST 對 Auth 模擬器註冊時要帶 `Content-Type: application/json`，不然拿到的 token 寫什麼都是 Permission denied。（T06）
+- GitHub 警告 Firebase 的 apiKey 外洩不用換 key（本來就公開），但 key 要限制只能從網站網址使用；換網址時要更新限制。（T07）
 
 ## 命名與放置
 

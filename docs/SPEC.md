@@ -412,6 +412,7 @@ rooms/{roomCode}
   - 不能投自己，投的對象必須是本輪（或重投）的候選人。
   - `votes` 只能在 `vote` 階段寫入，`revote/votes` 只能在 `revote` 階段寫入，輪次必須是目前的 `round`，時間未到（含 1 秒緩衝）。
 - **刪除房間、列出房間**：一般使用者都不行，只能由管理者在後台操作（見 5.5）。
+- **API Key 限制**：Firebase 網頁版的 `apiKey` 本來就公開。在 Google Cloud Console 限制它只能從 `https://elinor-248.github.io/*` 使用，而且只能呼叫 Identity Toolkit API 和 Token Service API，避免別人在其他地方冒用專案、塞滿免費額度（T07）。
 - **規則的長度限制**：暱稱和題目在規則裡用 UTF-16 長度檢查，上限放寬成兩倍（16、40），讓 emoji 也能通過；實際的字數上限由 `rules.js` 檢查。
 
 ### 5.7 外部資源

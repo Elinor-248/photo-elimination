@@ -81,3 +81,19 @@
 - 解法：`signUp` 的 fetch 加上 `headers: { 'Content-Type': 'application/json' }`。
 - 怎麼預防：之後寫任何打模擬器 REST API 的測試，都要帶 `Content-Type`。遇到「全部允許的寫入都被擋」時，先懷疑身分，再懷疑規則。
 
+## T07 GitHub 警告 js/config.js 裡有 Google API Key 外洩
+
+- 日期：2026-11-14
+- 相關檔案：js/config.js
+- 症狀：推到公開 repo 後，GitHub 寄信「Action needed: Secrets detected」，secret scanning 標記 `js/config.js` 的 `apiKey: 'AIzaSy…'` 是 Google API Key。
+- 原因：Firebase 網頁版的 `apiKey` 格式和一般 Google API Key 一樣，所以被掃到。但它不是祕密：網站上線後任何人都能在網頁原始碼看到，它只用來識別專案，不能拿來讀寫資料。資料安全靠 `firebase/database.rules.json`。
+- 試過沒用的方法：（沒有試，但要避免）換新 key 或清掉 git 歷史都沒有用，新 key 一樣會出現在網頁裡。
+- 解法：
+  1. 在 Google Cloud Console →「API 和服務 → 憑證」編輯「Browser key (auto created by Firebase)」：應用程式限制選「網站」，只允許 `https://elinor-248.github.io/*`；API 限制只勾 Identity Toolkit API、Token Service API。
+  2. 驗證：從網站來源呼叫匿名登入回 200；沒有來源、其他網站回 403（`Requests from referer <empty> are blocked`）。
+  3. 在 GitHub 把警示標成 won't fix，附上說明。
+- 怎麼預防：
+  - 換網址（例如自訂網域、改 repo 名稱）時，要記得到 Google Cloud 把新網址加進 API Key 的網站限制，不然線上版會登入失敗。
+  - 本機開發連的是模擬器，用的是假的 `demo-api-key`，不受這個限制影響。
+  - 之後再看到同樣的警示，不用換 key，確認限制還在、關閉警示即可。
+
