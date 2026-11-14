@@ -4,13 +4,14 @@
 export const FIREBASE_SDK_VERSION = '13.1.0';
 export const FIREBASE_SDK_URL = `https://www.gstatic.com/firebasejs/${FIREBASE_SDK_VERSION}`;
 
-// 正式環境的 Firebase 專案設定，建立專案後填入
+// 正式環境的 Firebase 專案設定。這些值會出現在網頁原始碼裡，本來就是公開的；
+// 資料安全靠 firebase/database.rules.json 的安全規則。
 export const FIREBASE_CONFIG = {
-  apiKey: '',
-  authDomain: '',
-  databaseURL: '',
-  projectId: '',
-  appId: '',
+  apiKey: 'AIzaSyBxWFNaOFfdGMayX7Zsf7ivdyGxpYOS8oM',
+  authDomain: 'photo-elimination.firebaseapp.com',
+  databaseURL: 'https://photo-elimination-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'photo-elimination',
+  appId: '1:512720357155:web:5c580c9077ba6c73852e96',
 };
 
 // 連到 localhost 時改連模擬器（SPEC 5.8）

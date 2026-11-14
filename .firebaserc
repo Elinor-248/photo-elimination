@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "demo-photo-elimination"
+    "default": "demo-photo-elimination",
+    "prod": "photo-elimination"
   }
 }
